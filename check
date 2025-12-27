@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing Lens</title>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #faf8f5;
+            --bg-secondary: #f0ebe3;
+            --bg-card: #ffffff;
+            --text-primary: #2c2418;
+            --text-secondary: #6b5d4d;
+            --text-muted: #9a8b78;
+            --accent: #c45d3a;
+            --accent-hover: #a84d2f;
+            --accent-light: #f8ebe6;
+            --border: #e5ded4;
+            --shadow: rgba(44, 36, 24, 0.08);
+            --tag-bg: #eee8df;
+            --success: #4a7c59;
+            --error: #b84a3c;
+        }
+
+        .dark {
+            --bg-primary: #1a1714;
+            --bg-secondary: #252019;
+            --bg-card: #2a241c;
+            --text-primary: #f0ebe3;
+            --text-secondary: #b8a994;
+            --text-muted: #7a6c5a;
+            --accent: #e07850;
+            --accent-hover: #f08a62;
+            --accent-light: #3d2a22;
+            --border: #3d362c;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --tag-bg: #3a332a;
+            --success: #6b9a7a;
+            --error: #d46a5c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            animation: fadeDown 0.6s ease-out;
+        }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .editor-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 24px var(--shadow);
+            animation: fadeUp 0.6s ease-out 0.1s both;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 12px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-light);
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .aspects-section {
+            animation: fadeUp 0.6s ease-out 0.2s both;
+        }
+
+        .aspects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .aspect-chip {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .aspect-chip input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .aspect-chip label {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.75rem 1rem;
+            background: var(--tag-bg);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .aspect-chip label:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .aspect-chip input:checked + label {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .aspect-chip .icon {
+            font-size: 1.1rem;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(196, 93, 58, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .feedback-section {
+            display: none;
+            animation: fadeUp 0.5s ease-out;
+        }
+
+        .feedback-section.visible {
+            display: block;
+        }
+
+        .feedback-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .feedback-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.loading {
+            background: var(--accent);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .status-dot.error {
+            background: var(--error);
+        }
+
+        .feedback-content {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'Crimson Pro', serif;
+            font-size: 1.05rem;
+            line-height: 1.9;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+        }
+
+        .feedback-content h1, .feedback-content h2, .feedback-content h3 {
+            font-family: 'DM Sans', sans-serif;
+            color: var(--accent);
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-content h1:first-child, .feedback-content h2:first-child, .feedback-content h3:first-child {
+            margin-top: 0;
+        }
+
+        .feedback-content ul, .feedback-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feedback-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .feedback-content strong {
+            color: var(--accent);
+        }
+
+        .feedback-content code {
+            background: var(--tag-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .feedback-content blockquote {
+            border-left: 3px solid var(--accent);
+            margin: 1rem 0;
+            padding-left: 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .word-count {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.25rem 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .aspects-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .aspect-chip label {
+                padding: 0.625rem 0.875rem;
+                font-size: 0.85rem;
+            }
+
+            textarea {
+                min-height: 160px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Writing Lens</h1>
+            <p class="subtitle">Focused feedback on the aspects that matter to you</p>
+        </header>
+
+        <div class="editor-section">
+            <div class="section-label">Your Writing</div>
+            <textarea id="writingInput" placeholder="Paste or type your text here..."></textarea>
+            <div class="word-count"><span id="wordCount">0</span> words</div>
+        </div>
+
+        <div class="editor-section aspects-section">
+            <div class="section-label">Select Feedback Aspects</div>
+            <div class="aspects-grid">
+                <div class="aspect-chip">
+                    <input type="checkbox" id="grammar" value="Grammar & Spelling" checked>
+                    <label for="grammar"><span class="icon">✓</span> Grammar</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="clarity" value="Clarity & Readability">
+                    <label for="clarity"><span class="icon">◎</span> Clarity</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="tone" value="Tone & Voice">
+                    <label for="tone"><span class="icon">♪</span> Tone</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="structure" value="Structure & Flow">
+                    <label for="structure"><span class="icon">≡</span> Structure</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="conciseness" value="Conciseness">
+                    <label for="conciseness"><span class="icon">◇</span> Conciseness</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="vocabulary" value="Vocabulary & Word Choice">
+                    <label for="vocabulary"><span class="icon">Aa</span> Vocabulary</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="engagement" value="Engagement & Impact">
+                    <label for="engagement"><span class="icon">★</span> Engagement</label>
+                </div>
+                <div class="aspect-chip">
+                    <input type="checkbox" id="argument" value="Argument & Logic">
+                    <label for="argument"><span class="icon">⚡</span> Argument</label>
+                </div>
+            </div>
+
+            <button class="analyze-btn" id="analyzeBtn">
+                <span class="btn-text">Analyze Writing</span>
+            </button>
+        </div>
+
+        <div class="editor-section feedback-section" id="feedbackSection">
+            <div class="feedback-header">
+                <div class="section-label">Feedback</div>
+                <div class="feedback-status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Analyzing...</span>
+                </div>
+            </div>
+            <div class="feedback-content" id="feedbackContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Elements
+        const writingInput = document.getElementById('writingInput');
+        const wordCountEl = document.getElementById('wordCount');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const feedbackSection = document.getElementById('feedbackSection');
+        const feedbackContent = document.getElementById('feedbackContent');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        // Word count
+        writingInput.addEventListener('input', () => {
+            const text = writingInput.value.trim();
+            const words = text ? text.split(/\s+/).length : 0;
+            wordCountEl.textContent = words;
+        });
+
+        // Get selected aspects
+        function getSelectedAspects() {
+            const checkboxes = document.querySelectorAll('.aspect-chip input:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // Configure marked for security
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+
+        // Register handler for streaming feedback
+        window.Poe.registerHandler('feedback-handler', (result) => {
+            const msg = result.responses[0];
+
+            if (msg.status === 'error') {
+                statusDot.className = 'status-dot error';
+                statusText.textContent = 'Error occurred';
+                feedbackContent.innerHTML = `<div class="empty-state">Error: ${msg.statusText || 'Unable to get feedback'}</div>`;
+            } else if (msg.status === 'incomplete') {
+                statusDot.className = 'status-dot loading';
+                statusText.textContent = 'Analyzing...';
+                feedbackContent.innerHTML = marked.parse(msg.content);
+            } else if (msg.status === 'complete') {
+                statusDot.className = 'status-dot';
+                statusText.textContent = 'Complete';
+                feedbackContent.innerHTML = marked.parse(msg.content);
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<span class="btn-text">Analyze Writing</span>';
+            }
+        });
+
+        // Analyze button click
+        analyzeBtn.addEventListener('click', async () => {
+            const text = writingInput.value.trim();
+            const aspects = getSelectedAspects();
+
+            if (!text) {
+                showFeedback('Please enter some text to analyze.', 'error');
+                return;
+            }
+
+            if (aspects.length === 0) {
+                showFeedback('Please select at least one aspect for feedback.', 'error');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<div class="spinner"></div><span class="btn-text">Analyzing...</span>';
+
+            feedbackSection.classList.add('visible');
+            statusDot.className = 'status-dot loading';
+            statusText.textContent = 'Analyzing...';
+            feedbackContent.innerHTML = '<div class="empty-state">Getting feedback...</div>';
+
+            // Build prompt
+            const aspectsList = aspects.join(', ');
+            const prompt = `Analyze the following writing and provide focused, constructive feedback ONLY on these specific aspects: ${aspectsList}.
+
+For each aspect, provide:
+- Specific observations with examples from the text
+- Actionable suggestions for improvement
+- What's working well (if applicable)
+
+Keep feedback clear, organized with headings for each aspect, and practical. Use markdown formatting.
+
+---
+
+TEXT TO ANALYZE:
+
+${text}`;
+
+            try {
+                await window.Poe.sendUserMessage(`@GPT-4o-mini ${prompt}`, {
+                    handler: 'feedback-handler',
+                    stream: true,
+                    openChat: false
+                });
+            } catch (err) {
+                showFeedback(`Error: ${err.message || 'Unable to analyze text'}`, 'error');
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<span class="btn-text">Analyze Writing</span>';
+            }
+        });
+
+        function showFeedback(message, type = 'info') {
+            feedbackSection.classList.add('visible');
+            statusDot.className = `status-dot ${type === 'error' ? 'error' : ''}`;
+            statusText.textContent = type === 'error' ? 'Error' : 'Info';
+            feedbackContent.innerHTML = `<div class="empty-state">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
